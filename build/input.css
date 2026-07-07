@@ -70,6 +70,19 @@
 .twist[open]>summary::before{content:"\2212 "}
 .port .num-spin::-webkit-inner-spin-button,.port .num-spin::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 .port .num-spin{-moz-appearance:textfield}
+/* ---- network map (inline SVG) ---- */
+#netmap{background:var(--color-bg);border:1px solid var(--color-line);border-radius:16px;user-select:none}
+.mnode{cursor:grab}
+.mnode-box{fill:var(--color-panel);stroke:var(--color-line);stroke-width:1.5;transition:stroke .15s}
+.mnode:hover .mnode-box{stroke:var(--color-amber)}
+.mnode-icon rect,.mnode-icon line{stroke:var(--color-amber);stroke-width:2;stroke-linecap:round}
+.mnode-name{fill:var(--color-ink);font:600 13px/1 var(--font-mono)}
+.mnode-sub{fill:var(--color-faint);font:11px/1 var(--font-mono)}
+.mnode-led.up{fill:var(--color-up)}.mnode-led.wip{fill:var(--color-wip)}.mnode-led.paused{fill:var(--color-paused)}.mnode-led.offline{fill:var(--color-down)}
+.medge line{stroke:var(--color-line2);stroke-width:1.5}
+.medge-lblbg{fill:var(--color-panel2);stroke:var(--color-line)}
+.medge-lbl{fill:var(--color-dim);font:11px/1 var(--font-mono)}
+#arrow path{fill:var(--color-line2)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 @media print{
   header,.statline{position:static}

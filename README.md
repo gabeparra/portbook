@@ -27,7 +27,7 @@ Handy alias: `alias portbook='python3 ~/path/to/portbook.py'`.
   machine automatically shows that port under an **incoming** list (← from the source machine +
   its hostname) — connections are entered once and reflected on both ends. Common
   ports auto-suggest a label (22 → SSH/SFTP, 80 → HTTP, 443 → HTTPS, 3306 → MySQL, …) — shown
-  as a hint and filled in if you leave it blank. The **Port map** view lists every port with
+  as a hint and filled in if you leave it blank. The **Ports** view lists every port with
   its machine, service, and connection in one table.
 - **Tickets** — mostly **references to external tickets** (e.g. from the org that manages your
   ports / internet). Per ticket: status, priority, their **ref #**, a **link** to the external
@@ -36,10 +36,14 @@ Handy alias: `alias portbook='python3 ~/path/to/portbook.py'`.
   **on its own** (header **+ ticket**) and **assign it to a machine** whenever — or leave it
   unassigned (it shows in an "unassigned" card and on the board).
 
-Three views (toggle at the top):
+Four views (toggle at the top):
 - **Machines** — cards you edit inline
+- **Map** — a network diagram: each machine is a draggable PC icon, each connection an arrow
+  labelled with its port. Drag to arrange (the layout is saved), **auto-arrange** to reset,
+  click a machine to jump to its card. The arrows come straight from the connections you set.
 - **Tickets** — a board grouped by status, across all machines
-- **Port map** — every port sorted by number, flagging any port reused on multiple machines
+- **Ports** — a table of every port sorted by number, with its connections, flagging any port
+  reused on multiple machines
 
 Plus instant search across everything, a **Print** view (clean one-page fleet sheet), and a
 **Backup** button (downloads a dated JSON).
