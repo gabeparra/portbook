@@ -23,7 +23,9 @@ Handy alias: `alias portbook='python3 ~/path/to/portbook.py'`.
   OS/location/notes
 - **Ports** — per machine: number + tcp/udp + what it serves + **what it connects to** — pick
   one of your existing machines from a dropdown (or "external"), with an optional port/detail,
-  so connections link to real machines. Common
+  so connections link to real machines. The target machine automatically shows that port under
+  an **incoming** list (← from the source machine + its hostname) — a connection is entered once
+  and reflected on both ends. Common
   ports auto-suggest a label (22 → SSH/SFTP, 80 → HTTP, 443 → HTTPS, 3306 → MySQL, …) — shown
   as a hint and filled in if you leave it blank. The **Port map** view lists every port with
   its machine, service, and connection in one table.
