@@ -1,0 +1,79 @@
+@import "tailwindcss";
+@source "../portbook.py";
+
+/* ---- design tokens: dark, NEUTRAL grey (no blue tint), one warm accent ---- */
+@theme {
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Inter, sans-serif;
+
+  --color-bg: #0f0f11;
+  --color-panel: #17171b;
+  --color-panel2: #1e1e23;
+  --color-line: #2b2b32;
+  --color-line2: #3d3d46;
+  --color-ink: #f3f4f6;
+  --color-dim: #a6acb8;
+  --color-faint: #6d7079;
+
+  --color-amber: #f2b544;
+  --color-up: #46c98a;
+  --color-wip: #e6a13a;
+  --color-paused: #7c7c85;
+  --color-down: #ec6a6a;
+  --color-topen: #a3aab8;
+  --color-twip: #e6a13a;
+  --color-tblocked: #ec6a6a;
+  --color-tdone: #46c98a;
+}
+
+@layer base {
+  html { font-size: 15px; }
+  body { @apply bg-bg text-ink font-sans antialiased leading-relaxed; }
+  input, select, textarea { min-width: 0; max-width: 100%; }
+  ::selection { background: color-mix(in srgb, var(--color-amber) 28%, transparent); }
+}
+
+@layer components {
+  .field { @apply bg-panel2 border border-line rounded-lg px-2.5 py-1.5 text-ink outline-none transition focus:border-amber focus:ring-2 focus:ring-amber/25; }
+  .flat  { @apply bg-transparent border-0 border-b border-transparent rounded-none px-0 py-1 text-ink outline-none transition focus:border-line2; }
+  .btn   { @apply font-mono text-xs border border-line rounded-lg px-3 py-1.5 text-dim bg-transparent cursor-pointer transition hover:text-ink hover:border-amber/70; }
+  .eyebrow { @apply mt-4 mb-2 font-mono text-[0.7rem] tracking-[0.14em] uppercase text-faint flex items-center gap-2 after:content-[''] after:flex-1 after:h-px after:bg-line; }
+  .addrow { @apply font-mono text-[0.82rem] w-full text-left border border-dashed border-line rounded-lg px-3 py-1.5 text-faint bg-transparent cursor-pointer transition hover:border-amber hover:text-amber; }
+  .led { @apply w-2.5 h-2.5 rounded-full shrink-0; }
+  .tab { @apply font-mono text-sm px-2.5 py-1.5 border-0 border-b-2 border-transparent text-dim bg-transparent cursor-pointer transition hover:text-ink; }
+  .tab.on { @apply text-ink border-amber; }
+  .card { @apply bg-panel border border-line rounded-2xl p-5 relative transition-colors hover:border-line2 shadow-[0_12px_30px_-18px_rgba(0,0,0,0.75)]; }
+  .stsel { @apply font-mono text-[0.72rem] bg-panel2 border border-line rounded-full px-2.5 py-1 text-dim cursor-pointer; }
+  .portnum { @apply bg-panel2 border border-line rounded-md px-2 py-1.5 font-mono text-right text-amber w-[4.6rem]; }
+  .proto { @apply bg-transparent border border-line rounded-md px-1 py-1.5 font-mono text-[0.78rem] uppercase text-dim; }
+  .iconbtn { @apply bg-transparent border-0 text-faint hover:text-down cursor-pointer p-0 px-1 leading-none; }
+  .tk { @apply border border-line rounded-lg bg-panel2 overflow-hidden; }
+  .tksum { @apply flex items-center gap-2 px-2.5 py-2 cursor-pointer list-none; }
+  .tdot { @apply w-2.5 h-2.5 rounded-full shrink-0; }
+  .tkbody { @apply px-2.5 pb-2.5 pt-2 flex flex-col gap-2 border-t border-line; }
+  .tcard { @apply bg-panel2 border border-line border-l-[3px] rounded-lg p-2.5 mb-2.5; }
+  .boardcol { @apply bg-panel border border-line rounded-2xl p-3; }
+}
+
+/* ---- dynamic status classes + details marker (plain CSS, no scanning needed) ---- */
+.led.up{background:var(--color-up);box-shadow:0 0 7px color-mix(in srgb,var(--color-up) 70%,transparent)}
+.led.wip{background:var(--color-wip);box-shadow:0 0 7px color-mix(in srgb,var(--color-wip) 70%,transparent)}
+.led.paused{background:var(--color-paused)}
+.led.offline{background:var(--color-down);box-shadow:0 0 7px color-mix(in srgb,var(--color-down) 70%,transparent)}
+.tdot.open{background:var(--color-topen)}.tdot.wip{background:var(--color-twip)}.tdot.blocked{background:var(--color-tblocked)}.tdot.done{background:var(--color-tdone)}
+.tcard.open{border-left-color:var(--color-topen)}.tcard.wip{border-left-color:var(--color-twip)}.tcard.blocked{border-left-color:var(--color-tblocked)}.tcard.done{border-left-color:var(--color-tdone)}
+.tk>summary::-webkit-details-marker{display:none}
+.tk>summary::before{content:"\25B8";color:var(--color-faint);font-size:.72rem;transition:transform .15s}
+.tk[open]>summary::before{transform:rotate(90deg)}
+.twist>summary::-webkit-details-marker{display:none}
+.twist>summary::before{content:"+ ";color:var(--color-faint)}
+.twist[open]>summary::before{content:"\2212 "}
+.port .num-spin::-webkit-inner-spin-button,.port .num-spin::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.port .num-spin{-moz-appearance:textfield}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{
+  header,.statline{position:static}
+  .tab,.btn,#q,#status,.addrow,.iconbtn,.tkdel,.delcard{display:none!important}
+  .card,.boardcol{break-inside:avoid;box-shadow:none}
+  body{background:#fff;color:#000}
+}

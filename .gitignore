@@ -1,0 +1,13 @@
+# portbook runtime data — yours; back it up separately (cp / git elsewhere / synced folder)
+portbook.json
+portbook.json.bak
+.portbook.*.tmp
+
+__pycache__/
+*.pyc
+
+# Tailwind build artifacts (binary is 107MB; CSS is generated + inlined into portbook.py)
+build/tailwindcss
+build/portbook.css
+build/*.css
+!build/input.css
