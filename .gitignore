@@ -3,6 +3,9 @@ portbook.json
 portbook.json.bak
 .portbook.*.tmp
 
+# auth secret — never commit the real password
+.env
+
 __pycache__/
 *.pyc
 

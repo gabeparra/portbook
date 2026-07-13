@@ -56,6 +56,25 @@ plain, human-readable, hand-editable. Everything saves **as you type** (nothing 
 - Every save is atomic and keeps the prior copy as `portbook.json.bak` (one-step undo).
 - Edit it by hand only while the server is stopped (the running UI owns the file).
 
+## Password protection (optional)
+By default portbook is open and loopback-only — nothing to log into. To require a login (handy
+if you want to reach it from your LAN / VPN / tailnet), set a password:
+```bash
+cp .env.example .env        # then edit PORTBOOK_PASSWORD, and restart portbook
+# or, without a file:  PORTBOOK_PASSWORD=secret python3 portbook.py
+```
+With a password set, every page and API requires a login. The password lives in `.env`
+(gitignored — never committed); a session cookie (HttpOnly, SameSite=Strict) keeps you signed
+in, and a **logout** button appears in the header. Leave it unset and nothing changes.
+
+To reach portbook beyond this machine, bind to a network address:
+```bash
+PORTBOOK_PASSWORD=secret python3 portbook.py --host 0.0.0.0
+```
+Traffic is plain HTTP, so only expose it over a **trusted** network (LAN / VPN / tailnet), never
+the open internet. portbook prints a warning on startup if you bind to a network interface with
+no password set.
+
 ## Restyle it (optional)
 The UI is styled with **Tailwind, compiled to plain CSS and inlined** into `portbook.py` — so
 it ships as one self-contained file with **no runtime dependencies**. To change the look:
