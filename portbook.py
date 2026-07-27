@@ -270,7 +270,9 @@ HTML = r"""<!doctype html><html lang="en"><head>
 <footer id="foot" class="max-w-[1180px] mx-auto px-5 pt-2 pb-10 text-faint text-[0.78rem] font-mono"></footer>
 <script>
 const STAT=["active","wip","paused","offline"], TST=["open","wip","blocked","done"], PRIO=["low","med","high"];
+const PSTAT=["open","pending","blocked","closed"];
 const LED={active:"up",wip:"wip",paused:"paused",offline:"offline"};
+const PLED={open:"up",pending:"wip",blocked:"offline",closed:"paused"};
 const WK={20:"FTP data",21:"FTP",22:"SSH / SFTP",23:"Telnet",25:"SMTP (mail)",53:"DNS",67:"DHCP",68:"DHCP",
 69:"TFTP",80:"HTTP (web)",110:"POP3",111:"RPC",123:"NTP",137:"NetBIOS",139:"NetBIOS / SMB",143:"IMAP",
 161:"SNMP",162:"SNMP trap",179:"BGP",389:"LDAP",443:"HTTPS (web)",445:"SMB",465:"SMTPS",514:"syslog",
@@ -297,7 +299,15 @@ async function load(){
   let _mig=false;
   S.machines.forEach(m=>{
     if(Array.isArray(m.tickets)){ m.tickets.forEach(tk=>{ tk.machine=m.name; S.tickets.push(tk); _mig=true; }); delete m.tickets; }
-    (m.ports||[]).forEach(p=>{ if(!Array.isArray(p.links)){ p.links = p.connectsTo ? [{to:p.connectsTo, detail:p.connects||""}] : []; _mig=true; } if(("connectsTo" in p)||("connects" in p)){ delete p.connectsTo; delete p.connects; _mig=true; } });
+    (m.ports||[]).forEach(p=>{
+      if(!Array.isArray(p.links)){ p.links = p.connectsTo ? [{to:p.connectsTo, detail:p.connects||""}] : []; _mig=true; }
+      if(("connectsTo" in p)||("connects" in p)){ delete p.connectsTo; delete p.connects; _mig=true; }
+      const portSt=(p.status&&PSTAT.includes(p.status))?p.status:null;
+      if("status" in p){ delete p.status; _mig=true; }
+      (p.links||[]).forEach(l=>{
+        if(!l.status||!PSTAT.includes(l.status)){ l.status=portSt||"open"; _mig=true; }
+      });
+    });
   });
   if(_mig) save();
   setStatus(S.updated?("saved "+fmt(S.updated)):"");
@@ -326,10 +336,10 @@ function statline(){
   const reuse=Object.values(pk).filter(c=>c>1).length;
   statEl.innerHTML=`<span><b class="text-ink">${S.machines.length}</b> machines</span><span class="text-faint">·</span>`+
     `<span><b class="text-ink">${ports}</b> ports</span><span class="text-faint">·</span><span><b class="text-ink">${openT}</b> open ticket${openT===1?"":"s"}</span>`+
-    (reuse?`<span class="text-faint">·</span><span class="text-wip">⚠ ${reuse} reused port${reuse>1?"s":""}</span>`:"");
+    (reuse?`<span class="text-faint">·</span><span class="text-faint" title="same port number on more than one machine — usually fine">⚠ ${reuse} shared</span>`:"");
 }
 function matchM(m){ if(!Q)return true; const q=Q.toLowerCase();
-  return [m.name,m.role,m.host,m.os,m.location,m.notes,...(m.ports||[]).flatMap(p=>[p.number,p.proto,p.serves,...(p.links||[]).flatMap(l=>[l.to,l.detail])])].join(" ").toLowerCase().includes(q);
+  return [m.name,m.role,m.host,m.os,m.location,m.notes,...(m.ports||[]).flatMap(p=>[p.number,p.proto,p.serves,...(p.links||[]).flatMap(l=>[l.to,l.detail,l.status])])].join(" ").toLowerCase().includes(q);
 }
 function matchT(k){ if(!Q)return true; const q=Q.toLowerCase();
   return [k.ref,k.title,k.status,k.priority,k.from,k.link,k.body,k.machine].join(" ").toLowerCase().includes(q);
@@ -342,8 +352,8 @@ function addM(){S.machines.push({name:"new machine",role:"",status:"active",host
 function delM(i){const nm=S.machines[i].name;if(confirm("Delete "+(nm||"this machine")+"?")){(S.tickets||[]).forEach(t=>{if(t.machine===nm)t.machine="";});S.machines.forEach(mm=>(mm.ports||[]).forEach(p=>{if(Array.isArray(p.links))p.links=p.links.filter(l=>l.to!==nm);}));S.machines.splice(i,1);save();render();}}
 function addPort(i){S.machines[i].ports.push({number:0,proto:"tcp",serves:"",links:[]});save();render();}
 function delPort(i,j){S.machines[i].ports.splice(j,1);save();render();}
-function addLink(i,j){(S.machines[i].ports[j].links=S.machines[i].ports[j].links||[]).push({to:"",detail:""});save();render();}
-function setLink(i,j,li,k,v){S.machines[i].ports[j].links[li][k]=v;save();if(k==="to")render();else statline();}
+function addLink(i,j){(S.machines[i].ports[j].links=S.machines[i].ports[j].links||[]).push({to:"",detail:"",status:"open"});save();render();}
+function setLink(i,j,li,k,v){S.machines[i].ports[j].links[li][k]=v;save();if(k==="to"||k==="status")render();else statline();}
 function delLink(i,j,li){S.machines[i].ports[j].links.splice(li,1);save();render();}
 function addTk(machine){S.tickets.push({ref:"",title:"",status:"open",priority:"med",from:"",link:"",body:"",machine:machine||""});save();render();}
 function addTkFor(i){addTk(S.machines[i].name);}
@@ -357,7 +367,7 @@ function reflink(k){
 }
 function machineOpts(k){ return `<option value="" ${!k.machine?"selected":""}>— unassigned</option>`+S.machines.map(m=>`<option value="${esc(m.name)}" ${k.machine===m.name?"selected":""}>${esc(m.name)}</option>`).join(""); }
 function connectOpts(l){ return `<option value="" ${!l.to?"selected":""}>— none</option>`+S.machines.map(m=>`<option value="${esc(m.name)}" ${l.to===m.name?"selected":""}>${esc(m.name)}</option>`).join("")+`<option value="external" ${l.to==="external"?"selected":""}>external</option>`; }
-function incomingFor(name){ const r=[]; S.machines.forEach(m=>(m.ports||[]).forEach(p=>(p.links||[]).forEach(l=>{ if(l.to===name) r.push({p,from:m,detail:l.detail}); }))); return r; }
+function incomingFor(name){ const r=[]; S.machines.forEach(m=>(m.ports||[]).forEach(p=>(p.links||[]).forEach(l=>{ if(l.to===name) r.push({p,from:m,detail:l.detail,status:l.status||"open"}); }))); return r; }
 function ticketEditor(k,ti){ return `
         <details class="tk" ${(!k.title&&!k.body)?"open":""}>
           <summary class="tksum"><span class="tdot ${k.status||"open"}"></span><span class="flex-1 min-w-0 truncate text-[0.92rem]">${esc(k.title)|| "<span class='text-faint'>(new ticket — click to fill)</span>"}</span>${reflink(k)}</summary>
@@ -401,10 +411,11 @@ function renderMachines(){
             <button class="iconbtn" title="remove" onclick="delPort(${i},${j})">✕</button>
           </div>
           ${(p.links||[]).map((l,li)=>`
-          <div class="flex items-center gap-1.5 text-[0.82rem] pl-[1.2rem]">
+          <div class="flex items-center gap-1.5 text-[0.82rem] pl-[1.2rem] flex-wrap">
             <span class="text-faint font-mono shrink-0">↳ to</span>
             <select class="field font-sans py-1 text-[0.82rem]" onchange="setLink(${i},${j},${li},'to',this.value)" title="connects to which machine">${connectOpts(l)}</select>
-            <input class="flat text-dim flex-1" value="${esc(l.detail)}" oninput="setLink(${i},${j},${li},'detail',this.value)" placeholder="port / detail (optional)">
+            <span class="flex items-center gap-1.5 shrink-0"><span class="led ${PLED[l.status||"open"]}"></span><select class="stsel" onchange="setLink(${i},${j},${li},'status',this.value)" title="connection status">${PSTAT.map(v=>opt(v,l.status||"open")).join("")}</select></span>
+            <input class="flat text-dim flex-1 min-w-[6rem]" value="${esc(l.detail)}" oninput="setLink(${i},${j},${li},'detail',this.value)" placeholder="dest port / detail (optional)">
             <button class="iconbtn" title="remove connection" onclick="delLink(${i},${j},${li})">✕</button>
           </div>`).join("")}
           <button class="self-start ml-[1.2rem] font-mono text-[0.74rem] text-faint hover:text-amber bg-transparent border-0 cursor-pointer px-0 py-0.5" onclick="addLink(${i},${j})">+ connection</button>
@@ -412,10 +423,12 @@ function renderMachines(){
         <button class="addrow" onclick="addPort(${i})">+ port</button>
       </div>
       ${inc.length?`<div class="eyebrow">incoming</div>
-      <div class="flex flex-col gap-1">${inc.map(({p,from,detail})=>`
-        <div class="flex items-center gap-2 text-[0.85rem]" title="opened by a connection from ${esc(from.name)} — edit it on that machine">
+      <div class="flex flex-col gap-1">${inc.map(({p,from,detail,status})=>`
+        <div class="flex items-center gap-2 text-[0.85rem]" title="from an outbound connection on ${esc(from.name)} — edit status there">
+          <span class="led ${PLED[status||"open"]} shrink-0" title="${esc(status||"open")}"></span>
           <span class="font-mono text-amber w-[4.6rem] text-right pr-2 shrink-0">${p.number||"?"}</span>
           <span class="font-mono text-dim text-[0.76rem] uppercase shrink-0">${esc(p.proto||"tcp")}</span>
+          <span class="font-mono text-[0.72rem] text-faint shrink-0">${esc(status||"open")}</span>
           <span class="text-dim truncate min-w-0">← ${esc(from.name)}${from.host?` <span class="text-faint">(${esc(from.host)})</span>`:""}${detail?` <span class="text-faint">${esc(detail)}</span>`:""}</span>
         </div>`).join("")}
       </div>`:""}
@@ -463,19 +476,26 @@ function renderTickets(){
     </div>`).join("")+`</div>`;
 }
 function renderPorts(){
-  const rows=[]; S.machines.forEach(m=>(m.ports||[]).forEach(p=>rows.push({n:p.number||0,proto:p.proto||"tcp",serves:p.serves||"",mn:m.name||"",links:p.links||[]})));
+  const rows=[];
+  S.machines.forEach((m,mi)=>(m.ports||[]).forEach((p,pi)=>{
+    const links=p.links||[];
+    if(!links.length){ rows.push({n:p.number||0,proto:p.proto||"tcp",serves:p.serves||"",mn:m.name||"",to:"",detail:"",status:"",mi,pi,li:-1}); return; }
+    links.forEach((l,li)=>rows.push({n:p.number||0,proto:p.proto||"tcp",serves:p.serves||"",mn:m.name||"",to:l.to||"",detail:l.detail||"",status:l.status||"open",mi,pi,li}));
+  }));
   const key=r=>r.n+"/"+r.proto,count={}; rows.forEach(r=>count[key(r)]=(count[key(r)]||0)+1);
-  rows.sort((a,b)=>a.n-b.n||a.proto.localeCompare(b.proto)||a.mn.localeCompare(b.mn));
-  const vis=rows.filter(r=>!Q||(r.n+" "+r.proto+" "+r.serves+" "+r.mn+" "+r.links.map(l=>l.to+" "+l.detail).join(" ")).toLowerCase().includes(Q.toLowerCase()));
+  rows.sort((a,b)=>a.n-b.n||a.proto.localeCompare(b.proto)||a.mn.localeCompare(b.mn)||(a.to||"").localeCompare(b.to||""));
+  const vis=rows.filter(r=>!Q||(r.n+" "+r.proto+" "+r.status+" "+r.serves+" "+r.mn+" "+r.to+" "+r.detail).toLowerCase().includes(Q.toLowerCase()));
   if(!vis.length){ app.innerHTML=`<div class="text-dim text-center py-12 font-mono">no ports yet</div>`; return; }
   const th=`px-2.5 py-1.5 text-left font-mono font-medium text-[0.7rem] tracking-wider uppercase text-faint border-b border-line`;
   const td=`px-2.5 py-2 border-b border-line`;
-  app.innerHTML=`<table class="w-full border-collapse text-[0.9rem]"><thead><tr><th class="${th}">port</th><th class="${th}">proto</th><th class="${th}">machine</th><th class="${th}">serves</th><th class="${th}">connects to</th></tr></thead><tbody>`+
+  app.innerHTML=`<table class="w-full border-collapse text-[0.9rem]"><thead><tr><th class="${th}">port</th><th class="${th}">proto</th><th class="${th}">from</th><th class="${th}">serves</th><th class="${th}">to</th><th class="${th}">status</th></tr></thead><tbody>`+
     vis.map(r=>{const re=count[key(r)]>1;return `<tr>
-      <td class="${td} font-mono ${re?"text-wip":"text-amber"}">${r.n||"?"}${re?' <span title="reused on multiple machines">⚠</span>':""}</td>
-      <td class="${td} font-mono text-dim uppercase text-[0.82rem]">${esc(r.proto)}</td><td class="${td} font-mono">${esc(r.mn)}</td>
+      <td class="${td} font-mono text-amber">${r.n||"?"}${re?' <span class="text-faint" title="same port on multiple machines — usually fine">⚠</span>':""}</td>
+      <td class="${td} font-mono text-dim uppercase text-[0.82rem]">${esc(r.proto)}</td>
+      <td class="${td} font-mono">${esc(r.mn)}</td>
       <td class="${td}">${r.serves?esc(r.serves):`<span class="text-faint italic">${esc(WK[r.n]||"—")}</span>`}</td>
-      <td class="${td} font-mono text-dim">${(r.links&&r.links.some(l=>l.to||l.detail))?r.links.filter(l=>l.to||l.detail).map(l=>`${l.to?`<span class="text-ink">${esc(l.to)}</span>`:""}${l.detail?` ${esc(l.detail)}`:""}`).join(`<span class="text-faint">, </span>`):`<span class="text-faint">—</span>`}</td></tr>`;}).join("")+`</tbody></table>`;
+      <td class="${td} font-mono text-dim">${r.to?`<span class="text-ink">${esc(r.to)}</span>${r.detail?` <span class="text-faint">${esc(r.detail)}</span>`:""}`:`<span class="text-faint">—</span>`}</td>
+      <td class="${td}">${r.li>=0?`<span class="inline-flex items-center gap-1.5"><span class="led ${PLED[r.status]}"></span><select class="stsel" onchange="setLink(${r.mi},${r.pi},${r.li},'status',this.value)" title="connection status">${PSTAT.map(v=>opt(v,r.status)).join("")}</select></span>`:`<span class="text-faint">—</span>`}</td></tr>`;}).join("")+`</tbody></table>`;
 }
 function mapW(){ return Math.max(app.clientWidth||960, 720); }
 function ensurePositions(){
