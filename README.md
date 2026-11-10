@@ -8,6 +8,7 @@
   <img src="https://img.shields.io/badge/install-one%20file-F2B544" />
   <img src="https://img.shields.io/badge/binds-127.0.0.1%20only-8B8F96" />
   <img src="https://img.shields.io/badge/Tailwind-build--time%20only-06B6D4?logo=tailwindcss&logoColor=white" />
+  <img src="https://img.shields.io/badge/license-MIT-yellow" />
 </div>
 
 ## Introduction
@@ -157,3 +158,7 @@ No server, no Docker, no database, no nginx, no SSO, no network scanning, no
 background service, no sync, no telemetry. Python standard library plus a
 browser at runtime. If your fleet outgrows that, you have outgrown portbook, and
 that is the point at which NetBox starts being worth its setup.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
