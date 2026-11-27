@@ -11,6 +11,10 @@
   <img src="https://img.shields.io/badge/license-MIT-yellow" />
 </div>
 
+> Local single-file fleet, port, connection, and ticket tracker with a loopback web UI.
+
+**Status:** `Maintained` - single-file Python standard library fleet and port tracker.
+
 ## Introduction
 
 **portbook** is a local tracker for a small fleet of machines: what each one
@@ -151,6 +155,11 @@ bash build/rebuild.sh
 That recompiles the CSS and regenerates the `<style>` block inside
 `portbook.py`. It needs the internet once to fetch the Tailwind standalone
 binary (no Node required). Running the app never needs the build step.
+
+## Stack & Architecture
+
+- **Stack:** Python 3.8+ standard library (`http.server`, `json`, `argparse`), plain browser HTML/JS, and build-time Tailwind CSS compiled into an inline `<style>` block.
+- **Layout:** `portbook.py` (self-contained server + UI), `build/` (optional Tailwind CSS rebuild script and source styles), `assets/` (banner and screenshots), and local gitignored `portbook.json` (with atomic `.bak` backup).
 
 ## What it deliberately is not
 
